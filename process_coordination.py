@@ -53,9 +53,9 @@ def bool_boundaries(rank, n_blocks):
     elif rank % n_blocks[0] == n_blocks[0]-1:
         bools[0] = 1
         
-    if rank % n_blocks[1] == 0:
+    if rank // n_blocks[1] == 0:
         bools[1] = 1
-    elif rank % n_blocks[1] == n_blocks[1]-1:
+    elif rank // n_blocks[1] == n_blocks[1]-1:
         bools[3] = 1
         
     return bools

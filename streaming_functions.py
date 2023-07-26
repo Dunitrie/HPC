@@ -1,6 +1,9 @@
 import numpy as np
 
-def recalculate_functions(f, rho, v):
+omega = 1
+wall_speed = 1
+
+def recalculate_functions(f, rho, v, c):
 
     rho = np.einsum("ijk -> jk", f)  # density field
     v_noscale = np.einsum("ijk, il -> ljk", f, c)  # velocity field
@@ -8,7 +11,7 @@ def recalculate_functions(f, rho, v):
 
     return f, rho, v
 
-def calc_equi(rho, v):
+def calc_equi(f, rho, v, c, weights):
     # Caluculate the equilibrium distribution function
     f_equi = np.zeros_like(f)
     v_abs = np.einsum("ijk -> jk", v)  # May be negative but will be squared anyway
@@ -33,7 +36,7 @@ def border_control(f, borders):
         f[5, 0] = np.roll(f[5, 0], shift=-1)
         f[6, 0] = np.roll(f[6, 0], shift=1)
         
-        rho_N = np.zeros(NY)
+        rho_N = np.zeros(f.shape[2])
         rho_N[:] = f[0, 1, :] + f[1, 1, :] + f[3, 1, :] +\
             2 * (f[2, 1, :] + f[6, 1, :] + f[5, 1, :])
         f[4, 1, :] = f[2, 0, :]
@@ -70,8 +73,8 @@ def border_control(f, borders):
 
     return f
 
-def streaming(f, rho, v, channel, borders, omega):
-    f_equi = calc_equi(rho, v)
+def streaming(f, rho, v, c, weights, borders):
+    f_equi = calc_equi(f, rho, v, c, weights)
 
     f += omega * (f_equi - f)
 
@@ -80,6 +83,6 @@ def streaming(f, rho, v, channel, borders, omega):
 
     f = border_control(f, borders)
     
-    f, rho, v = recalculate_functions(f, rho, v)
+    f, rho, v = recalculate_functions(f, rho, v, c)
 
     return f, rho, v
