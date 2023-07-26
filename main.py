@@ -73,18 +73,3 @@ for idx_time in ...:
         comm.Gather(...)
         if rank == 0:
             # plot in rank 0 
-            
-    
-        
-        
-
-            
-    
-    
-
-
-<<<<<<< HEAD
-    
-=======
-    
->>>>>>> 83a933dff5810bd2ecba07cfb602f99d05fd3ecf
