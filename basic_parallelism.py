@@ -15,9 +15,10 @@ sigma = 20*dx #arbitrary
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
+rank = comm.Get_rank()
+
 ntotal = 1e3
 
-rank = comm.Get_rank()
 
 nlocal = int(ntotal//size)
 indices = np.arange(nlocal*rank, nlocal*(rank+1))
