@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from mpi4py import MPI
 from process_coordination import width_height, bool_boundaries, number_of_blocks
+from streaming_functions import streaming
 
 # Initialize parallelization 
 comm = MPI.COMM_WORLD
@@ -17,28 +17,34 @@ ny_total = 200
 
 n_blocks = number_of_blocks((nx_total, ny_total), size)
 
+# Set parameters
+omega = 1
+wall_speed = 1
+
 # Initialize local grid parameters:
 # local size
 nx, ny = width_height(rank, nx_total, ny_total, n_blocks)
-boundaries = bool_boundaries(rank, nx, ny, n_blocks)
+borders = bool_boundaries(rank, nx, ny, n_blocks)
 
-# Initialize grid
-grid = np.zeros(9, nx+2, ny+2)
-... # initialize beginning distribution
+# Initialize weights and discrete direction vectors
+weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
+c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
+
+# initialize grid
+rho = np.ones((nx+2, ny+2))
+v = np.zeros((2, nx+2, ny+2))
+
+f = np.einsum("i,jk -> ijk", weights, np.ones((nx+2, ny+2)))
+
 
 # loop over timesteps
 for idx_time in ...:
     # 1. do the flow
-    ...
-    # 2. do the walls:
-    # We should probably distinguish between the indices
-    for idx in range(4):
-        if boundaries[idx]:
-    
-    
+    f, rho, v = streaming(f, rho, v, borders, omega)
+
     # 3. do the communications
-        else:
-            comm.Sendrecv(...)
+        #else:
+        #    comm.Sendrecv(...)
     
     # 4. do the plotting
     if idx_time % (n_timesteps // n_plots) == 0:
@@ -49,15 +55,3 @@ for idx_time in ...:
             
     
         
-        
-
-            
-    
-    
-
-
-<<<<<<< HEAD
-    
-=======
-    
->>>>>>> 83a933dff5810bd2ecba07cfb602f99d05fd3ecf

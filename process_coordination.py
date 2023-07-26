@@ -1,3 +1,5 @@
+import numpy as np
+
 def number_to_factors(N: int) -> list:
     """Helper function: Returns all possible combinations of grid-split-possibilities
     """
