@@ -36,14 +36,11 @@ f = np.zeros(9, nx+2, ny+2)
 ... # initialize beginning distribution
 
 # loop over timesteps
-for idx_time in ...:
+for idx_time in range(n_timesteps):
     # 1. do the flow
     ...
     # 2. do the walls:
     # We should probably distinguish between the indices
-    for idx in range(4):
-        if borders[idx]:
-            
     
     # 3. do the communications
     if not borders[0]:
@@ -70,6 +67,9 @@ for idx_time in ...:
     # 4. do the plotting
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
-        comm.Gather(...)
+        f_full = np.zeros(9, nx_total, ny_total)
+        comm.Gather(f[:,1:-1,1:-1], f_full, root=0)
         if rank == 0:
+            pass
             # plot in rank 0 
+# plot the ending
