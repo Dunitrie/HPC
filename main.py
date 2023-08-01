@@ -11,11 +11,11 @@ size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
 n_timesteps = 50
-n_plots = 5
+n_plots = 1
 
 # Initialize Grid:
-nx_total = 150  # num of rows
-ny_total = 100  # num of columns
+nx_total = 10  # num of rows
+ny_total = 8  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
@@ -43,6 +43,7 @@ rank_left = rank - 1
 rank_up = rank - n_blocks[1]
 rank_down = rank + n_blocks[1]
 
+print(n_blocks)
 print(f"Rank: {rank}, size: {nx, ny}, borders: {borders}")
 print(f"Rank: {rank}, neighbors: {rank_right, rank_up, rank_left, rank_down}")
 
@@ -72,19 +73,24 @@ for idx_time in range(n_timesteps):
             comm.Sendrecv(f[:, -2, :].copy(), rank_down, f[:, 0, :].copy(), source = rank_up)
         else:
             comm.Send(f[:, -2, :].copy(), rank_down)
-                
-    # Plot ?? TODO
+
+    if rank == 0:
+        f = -5 * f
+
+    # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
-        f_full = np.zeros((9, nx_total, ny_total))
+        f_full = np.empty((9, nx_total, ny_total))
         rho_full = np.ones((nx_total, ny_total))
         v_full = np.zeros((2, nx_total, ny_total))
+        print(f"Rank: {rank}, {f[:,1:-1,1:-1].copy()}")
         comm.Gather(f[:,1:-1,1:-1].copy(), f_full, root=0)
         f_full, rho_full, v_full = recalculate_functions(f_full, rho_full, v_full, c)
         if rank == 0:
+            print(f_full)
             ax = plot_velocity(f_full, v_full, return_plot=True)
-            # x_width = nx_total//n_blocks[1]
-            # y_width = ny_total//n_blocks[0]
+            # x_width = nx_total//n_blocks[0]
+            # y_width = ny_total//n_blocks[1]
             # for idx in range(1,n_blocks[1]):
             #     ax.plot(np.ones(f_full[0].shape[1]+2)*(idx*x_width-1), np.arange(-1,f_full[0].shape[1]+1), 'k')
             # for idx in range(1, n_blocks[0]):
@@ -92,5 +98,6 @@ for idx_time in range(n_timesteps):
             plt.show()
             
             # plot in rank 0
+    
 
 # plot the ending
