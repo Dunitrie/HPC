@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpi4py import MPI
 from process_coordination import width_height, bool_boundaries, number_of_blocks
-from streaming_functions import streaming
+from streaming_functions import streaming, recalculate_functions
 from plotting_functions import plot_velocity, plot_velocity_slice
 
 # Initialize parallelization 
@@ -77,15 +77,18 @@ for idx_time in range(n_timesteps):
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
         f_full = np.zeros((9, nx_total, ny_total))
+        rho_full = np.ones((nx_total, ny_total))
+        v_full = np.zeros((2, nx_total, ny_total))
         comm.Gather(f[:,1:-1,1:-1].copy(), f_full, root=0)
+        f_full, rho_full, v_full = recalculate_functions(f_full, rho_full, v_full, c)
         if rank == 0:
-            ax = plot_velocity(f_full, c=c, v=v return_plot=True)
-            x_width = nx_total//n_blocks[1]
-            y_width = ny_total//n_blocks[0]
-            for idx in range(1,n_blocks[1]):
-                ax.plot(np.ones(f_full[0].shape[1]+2)*(idx*x_width-1), np.arange(-1,f_full[0].shape[1]+1), 'k')
-            for idx in range(1, n_blocks[0]):
-                ax.plot(np.arange(-1,f_full[0].shape[0]+1), np.ones(f_full[0].shape[0]+2)*(idx*y_width-1), 'k')
+            ax = plot_velocity(f_full, v_full, return_plot=True)
+            # x_width = nx_total//n_blocks[1]
+            # y_width = ny_total//n_blocks[0]
+            # for idx in range(1,n_blocks[1]):
+            #     ax.plot(np.ones(f_full[0].shape[1]+2)*(idx*x_width-1), np.arange(-1,f_full[0].shape[1]+1), 'k')
+            # for idx in range(1, n_blocks[0]):
+            #     ax.plot(np.arange(-1,f_full[0].shape[0]+1), np.ones(f_full[0].shape[0]+2)*(idx*y_width-1), 'k')
             plt.show()
             
             # plot in rank 0

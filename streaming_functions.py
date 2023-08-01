@@ -8,7 +8,7 @@ def recalculate_functions(f, rho, v, c):
     Recalculate density and average viscosity at each point after probability density function has been updated.
     See Milestone 1.
     """
-    rho = np.einsum("ijk -> jk", f)  # density field
+    rho = np.einsum("cij -> ij", f)  # density field
     v_noscale = np.einsum("ijk, il -> ljk", f, c)  # velocity field
     v = np.einsum("ijk, jk -> ijk", v_noscale, np.reciprocal(rho))  # divide by rho to get averange velocity
 

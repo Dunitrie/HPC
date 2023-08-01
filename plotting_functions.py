@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from streaming_functions import recalculate_functions
 
-def plot_velocity(f, v, c, return_plot=False, fix_dims=False):
+def plot_velocity(f, v, return_plot=False):
     """ Plot the averagae velocity of the distribution f.
     
     
@@ -15,15 +16,7 @@ def plot_velocity(f, v, c, return_plot=False, fix_dims=False):
         fix_dims: If True: To keep plots coherent, invert x-axis and change x and y-axis
     
     """
-    
-    if c is None:
-        c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
-    if fix_dims:
-        c = np.stack([c[:,1], -c[:,0]], axis=1)
-    if v is None:
-        v = np.einsum('cij, cd -> dij', f, c)
-    v = np.swapaxes(v, 1,2)
-    #f = np.swapaxes(f, 1,2)
+    v = np.swapaxes(v, 1, 2)
         
     ax = plt.subplot()
     y, x = np.meshgrid(np.arange(f.shape[1]), np.arange(f.shape[2]))
@@ -34,6 +27,7 @@ def plot_velocity(f, v, c, return_plot=False, fix_dims=False):
     ax.axis('equal')
     ax.set_xlim(-2, f.shape[2]+1)
     ax.set_ylim(-2, f.shape[1]+1)
+    print(f.shape)
     ax.set_title("Velocity field")
     ax.invert_yaxis()
     
