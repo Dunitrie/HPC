@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
+def plot_velocity(f, v=None, c=None, return_plot=False, fix_dims=True):
     """ Plot the averagae velocity of the distribution f.
     
     
@@ -9,8 +9,8 @@ def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
         f: probability distribution
         
     Optional:
-        c: Directions of D2Q9-scheme
         v: velocity for each channel if already computed so we avoid computing it again. Otherwise computed as sum over channels times c
+        c: Directions of D2Q9-scheme
         return_plot: If True, return the axis-Object to plot it or change it in other file
         fix_dims: If True: To keep plots coherent, invert x-axis and change x and y-axis
     

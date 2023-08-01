@@ -3,18 +3,19 @@ import matplotlib.pyplot as plt
 from mpi4py import MPI
 from process_coordination import width_height, bool_boundaries, number_of_blocks
 from streaming_functions import streaming
+from plotting_functions import plot_velocity, plot_velocity_slice
 
 # Initialize parallelization 
 comm = MPI.COMM_WORLD
 size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
-n_timesteps = 10
+n_timesteps = 50
 n_plots = 5
 
 # Initialize Grid:
-nx_total = 300  # num of rows
-ny_total = 200  # num of columns
+nx_total = 150  # num of rows
+ny_total = 100  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
@@ -23,6 +24,7 @@ n_blocks = number_of_blocks((nx_total, ny_total), size)
 # Initialize local grid parameters (local grid is the one of the block of this process):
 # local size
 nx, ny = width_height(rank, nx_total, ny_total, n_blocks)
+
 # Initialize weights and discrete direction vectors
 weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
 c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
@@ -40,6 +42,9 @@ rank_right = rank + 1
 rank_left = rank - 1
 rank_up = rank - n_blocks[1]
 rank_down = rank + n_blocks[1]
+
+print(f"Rank: {rank}, size: {nx, ny}, borders: {borders}")
+print(f"Rank: {rank}, neighbors: {rank_right, rank_up, rank_left, rank_down}")
 
 # Loop over timesteps
 for idx_time in range(n_timesteps):
@@ -74,6 +79,7 @@ for idx_time in range(n_timesteps):
         f_full = np.zeros((9, nx_total, ny_total))
         comm.Gather(f[:,1:-1,1:-1].copy(), f_full, root=0)
         if rank == 0:
-            pass
+            plot_velocity(f_full)
             # plot in rank 0 
+
 # plot the ending
