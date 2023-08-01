@@ -6,45 +6,47 @@ from streaming_functions import streaming
 
 # Initialize parallelization 
 comm = MPI.COMM_WORLD
-size = comm.Get_size() # n_processes
-rank = comm.Get_rank()
+size = comm.Get_size() # num of processes
+rank = comm.Get_rank() # rank id of this process
 
 n_timesteps = 10
 n_plots = 5
 
 # Initialize Grid:
-nx_total = 300
-ny_total = 200
+nx_total = 300  # num of rows
+ny_total = 200  # num of columns
 
+# Arrange <size> blocks (num processes) as a optimized grid of
+# <n_blocks[0]> rows times <n_blocks[1]> columns.
 n_blocks = number_of_blocks((nx_total, ny_total), size)
 
-# Initialize local grid parameters:
+# Initialize local grid parameters (local grid is the one of the block of this process):
 # local size
 nx, ny = width_height(rank, nx_total, ny_total, n_blocks)
 # Initialize weights and discrete direction vectors
 weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
 c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
 
-# initialize grid
-rho = np.ones((nx+2, ny+2))
-v = np.zeros((2, nx+2, ny+2))
+# Initialize grid (add goast points or dry notes to each edge)
+rho = np.ones((nx+2, ny+2))  # density values
+v = np.zeros((2, nx+2, ny+2))  # average viscosity values
+f = np.einsum("i,jk -> ijk", weights, np.ones((nx+2, ny+2)))  # probability density function
 
-f = np.einsum("i,jk -> ijk", weights, np.ones((nx+2, ny+2)))
-
+# Check on which side this block borders another block or the boundary
 borders = bool_boundaries(rank, n_blocks)
 
-# rank of the process, where there's no (bounce-back-)boundary
+# Ranks of the processes of the neighboring blocks (only correct and used when theres no boundary on this side)
 rank_right = rank + 1
 rank_left = rank - 1
 rank_up = rank - n_blocks[1]
 rank_down = rank + n_blocks[1]
 
-# loop over timesteps
+# Loop over timesteps
 for idx_time in range(n_timesteps):
-    # 1. do the flow
+    # Calculate the streaming step wrt (global) boundary conditions
     f, rho, v = streaming(f, rho, v, c, weights, borders)
 
-    # 3. do the communications
+    # Communicate the outermost grid points to neighboring blocks for the next step
     if not borders[0]:
         if not borders[2]:
             comm.Sendrecv(f[:, :, -2].copy(), rank_right, recvbuf=f[:, :, 0].copy(), source = rank_left)
@@ -66,7 +68,7 @@ for idx_time in range(n_timesteps):
         else:
             comm.Send(f[:, -2, :].copy(), rank_down)
                 
-    # 4. do the plotting
+    # Plot ?? TODO
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
         f_full = np.zeros((9, nx_total, ny_total))

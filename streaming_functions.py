@@ -1,10 +1,13 @@
 import numpy as np
 
-omega = 1
-wall_speed = 1
+omega = 1  # Impact parameter of relaxation
+wall_speed = 1  # Speed of moving wall
 
 def recalculate_functions(f, rho, v, c):
-
+    """
+    Recalculate density and average viscosity at each point after probability density function has been updated.
+    See Milestone 1.
+    """
     rho = np.einsum("ijk -> jk", f)  # density field
     v_noscale = np.einsum("ijk, il -> ljk", f, c)  # velocity field
     v = np.einsum("ijk, jk -> ijk", v_noscale, np.reciprocal(rho))  # divide by rho to get averange velocity
@@ -12,7 +15,10 @@ def recalculate_functions(f, rho, v, c):
     return f, rho, v
 
 def calc_equi(f, rho, v, c, weights):
-    # Caluculate the equilibrium distribution function
+    """
+    Calculate the equilibrium distribution function.
+    See Milestone 2.
+    """
     f_equi = np.zeros_like(f)
     v_abs = np.einsum("ijk -> jk", v)  # May be negative but will be squared anyway
     for channel in range(9):
@@ -21,8 +27,12 @@ def calc_equi(f, rho, v, c, weights):
         f_equi[channel, :, :] = weights[channel] * rho * sum_bracket
     return f_equi
 
-def border_control(f, borders):    
-    if borders[0]:
+def border_control(f, borders):  
+    """
+    Handle global boundary conditions (bounce-back and moving wall) through using dry notes.
+    See Milestone 4.
+    """  
+    if borders[0]:  # True when theres a boundary to the right.
         # eastern boundary
         f[5, :, -1] = np.roll(f[5, :, -1], shift=(1, 0))
         f[8, :, -1] = np.roll(f[8, :, -1], shift=(-1, 0))
@@ -64,7 +74,7 @@ def border_control(f, borders):
     # necessary / correct???
     if borders[0]:
         f[:, :, -1] = 0
-    if borders[1]:    
+    if borders[1]:
         f[:, 0, :] = 0  # f[:, 1, :]  # restore imaginary row
     if borders[2]:
         f[:, :, 0] = 0
@@ -74,15 +84,18 @@ def border_control(f, borders):
     return f
 
 def streaming(f, rho, v, c, weights, borders):
-    f_equi = calc_equi(f, rho, v, c, weights)
+    """
+    Pipeline of one complete streaming step.
+    """
+    f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
 
-    f += omega * (f_equi - f)
+    f += omega * (f_equi - f)  # Relaxation
 
-    for channel in range(9):
+    for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
-    f = border_control(f, borders)
+    f = border_control(f, borders)  # Handle (global) boundary conditions
     
-    f, rho, v = recalculate_functions(f, rho, v, c)
+    f, rho, v = recalculate_functions(f, rho, v, c)  # Update values
 
     return f, rho, v

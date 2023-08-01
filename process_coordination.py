@@ -1,7 +1,8 @@
 import numpy as np
 
 def number_to_factors(N: int) -> list:
-    """Helper function: Returns all possible combinations of grid-split-possibilities
+    """
+    Helper function: Returns all possible combinations of grid-split-possibilities
     """
     factors = []
     for x1 in range(1, N+1):
@@ -10,8 +11,8 @@ def number_to_factors(N: int) -> list:
     return factors
 
 def number_of_blocks(dim, n_processes: int) -> list:
-    """ Return the number of 
-    
+    """
+    Return the number and arrangement of blocks as [num blocks in x-dir, num blocks in y-dir].
     """
     factor = dim[1]/dim[0]
     
@@ -30,7 +31,8 @@ def number_of_blocks(dim, n_processes: int) -> list:
     return  combinations[idx]
 
 def width_height(rank, nx, ny, n_blocks):
-    """Helper-function: Returns the width and height of a block depending on the grid parameters
+    """
+    Helper-function: Returns the width and height of a block depending on the grid parameters
     """
     width = nx // n_blocks[0]
     height = ny // n_blocks[1]
