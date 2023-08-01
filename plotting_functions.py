@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_velocity(f, v=None, c=None, return_plot=False, fix_dims=True):
+def plot_velocity(f, v, c, return_plot=False, fix_dims=False):
     """ Plot the averagae velocity of the distribution f.
     
     Args:
@@ -17,10 +17,10 @@ def plot_velocity(f, v=None, c=None, return_plot=False, fix_dims=True):
     if c is None:
         c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
     if fix_dims:
-        c = np.stack([c[:,1], -c[:,0]], axis=1) 
+        c = np.stack([c[:,1], -c[:,0]], axis=1)
     if v is None:
         v = np.einsum('cij, cd -> dij', f, c)
-        
+
     ax = plt.subplot()
     x, y = np.meshgrid(np.arange(f.shape[1]), np.arange(f.shape[2]))
     ax.quiver(x,y, v[0,...], v[1,...], angles='xy', scale_units='xy', scale=1, color='b', label='Vector Field')

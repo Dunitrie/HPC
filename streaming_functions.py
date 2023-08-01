@@ -32,16 +32,7 @@ def border_control(f, borders):
     Handle global boundary conditions (bounce-back and moving wall) through using dry notes.
     See Milestone 4.
     """  
-    if borders[0]:  # True when theres a boundary to the right.
-        # eastern boundary
-        f[5, :, -1] = np.roll(f[5, :, -1], shift=(1, 0))
-        f[8, :, -1] = np.roll(f[8, :, -1], shift=(-1, 0))
-
-        f[3, :, -2] = f[1, :, -1]
-        f[6, :, -2] = f[8, :, -1] + 1/2 * (f[2, :, -2] - f[4, :, -2])
-        f[7, :, -2] = f[5, :, -1] + 1/2 * (f[4, :, -2] - f[2, :, -2])
-    
-    if borders[1]:
+    if borders[1]:  # True when theres a boundary to the north.
         # northern boundary
         f[5, 0] = np.roll(f[5, 0], shift=-1)
         f[6, 0] = np.roll(f[6, 0], shift=1)
@@ -52,6 +43,15 @@ def border_control(f, borders):
         f[4, 1, :] = f[2, 0, :]
         f[7, 1, :] = f[5, 0, :] + 1/2 * (f[1, 1, :] - f[3, 1, :]) - 1/2 * rho_N * wall_speed
         f[8, 1, :] = f[6, 0, :] + 1/2 * (f[3, 1, :] - f[1, 1, :]) + 1/2 * rho_N * wall_speed
+
+    if borders[0]:
+        # eastern boundary
+        f[5, :, -1] = np.roll(f[5, :, -1], shift=(1, 0))
+        f[8, :, -1] = np.roll(f[8, :, -1], shift=(-1, 0))
+
+        f[3, :, -2] = f[1, :, -1]
+        f[6, :, -2] = f[8, :, -1] + 1/2 * (f[2, :, -2] - f[4, :, -2])
+        f[7, :, -2] = f[5, :, -1] + 1/2 * (f[4, :, -2] - f[2, :, -2])
 
     if borders[2]:
         # western boundary
@@ -71,15 +71,15 @@ def border_control(f, borders):
         f[5, -2, :] = f[7, -1, :] + 1/2 * (f[1, -2, :] - f[3, -2, :])
         f[6, -2, :] = f[8, -1, :] + 1/2 * (f[3, -2, :] - f[1, -2, :])
 
-    # necessary / correct???
+    # Set dry notes to 0.
     if borders[0]:
         f[:, :, -1] = 0
     if borders[1]:
-        f[:, 0, :] = 0  # f[:, 1, :]  # restore imaginary row
+        f[:, 0, :] = 0
     if borders[2]:
         f[:, :, 0] = 0
     if borders[3]:
-        f[:, -1, :] = 0  # f[:, -2, :]  # restore imaginary row
+        f[:, -1, :] = 0
 
     return f
 

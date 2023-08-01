@@ -64,12 +64,12 @@ for idx_time in range(n_timesteps):
             comm.Send(f[:, 1, :].copy(), rank_up)
     if not borders[2]:
         if not borders[0]:
-            comm.Sendrecv(f[:, 1, :].copy(), rank_left, recvbuf=f[:, -1, :].copy(), source = rank_right)
+            comm.Sendrecv(f[:, :, 1].copy(), rank_left, recvbuf=f[:, :, -1].copy(), source = rank_right)
         else:
-            comm.Send(f[:, 1, :].copy(), rank_left)
+            comm.Send(f[:, :, 1].copy(), rank_left)
     if not borders[3]:
         if not borders[1]:
-            comm.Sendrecv(f[:, -2, :].copy(), rank_down, f[:,0,:].copy(), source = rank_up)
+            comm.Sendrecv(f[:, -2, :].copy(), rank_down, f[:, 0, :].copy(), source = rank_up)
         else:
             comm.Send(f[:, -2, :].copy(), rank_down)
                 
@@ -79,15 +79,15 @@ for idx_time in range(n_timesteps):
         f_full = np.zeros((9, nx_total, ny_total))
         comm.Gather(f[:,1:-1,1:-1].copy(), f_full, root=0)
         if rank == 0:
-            ax = plot_velocity(f_full, return_plot=True)
+            ax = plot_velocity(f_full, c=c, v=v return_plot=True)
             x_width = nx_total//n_blocks[1]
             y_width = ny_total//n_blocks[0]
-            for idx in range(1,n_blocks[0]):
+            for idx in range(1,n_blocks[1]):
                 ax.plot(np.ones(f_full[0].shape[1]+2)*(idx*x_width-1), np.arange(-1,f_full[0].shape[1]+1), 'k')
-            for idx in range(1, n_blocks[1]):
+            for idx in range(1, n_blocks[0]):
                 ax.plot(np.arange(-1,f_full[0].shape[0]+1), np.ones(f_full[0].shape[0]+2)*(idx*y_width-1), 'k')
             plt.show()
             
-            # plot in rank 0 
+            # plot in rank 0
 
 # plot the ending
