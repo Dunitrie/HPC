@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
     """ Plot the averagae velocity of the distribution f.
     
-    
     Args:
         f: probability distribution
         
@@ -29,10 +28,21 @@ def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
     ax.grid()
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax.axis('equal')
-    ax.set_xlim(-1, f.shape[1])
-    ax.set_ylim(-1, f.shape[2])
+    ax.set_xlim(-2, f.shape[1]+1)
+    ax.set_ylim(-2, f.shape[2]+1)
     ax.set_title("Velocity field")
+    
+    
+    #plot the edges
+    plt.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(-1), 'k')
+    plt.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(x.shape[0]), 'k')
+    
+    plt.plot(np.ones(x.shape[0]+2)*(-1), np.arange(-1,x.shape[0]+1), 'k')
+    plt.plot(np.ones(x.shape[0]+2)*(x.shape[1]), np.arange(-1,x.shape[0]+1), 'k')
+    
     if return_plot:
         return ax
     else:
