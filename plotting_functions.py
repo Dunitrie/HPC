@@ -12,7 +12,6 @@ def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
         v: velocity for each channel if already computed so we avoid computing it again. Otherwise computed as sum over channels times c
         return_plot: If True, return the axis-Object to plot it or change it in other file
         fix_dims: If True: To keep plots coherent, invert x-axis and change x and y-axis
-    
     """
     
     if c is None:
@@ -37,11 +36,11 @@ def plot_velocity(f, c=None, v=None, return_plot=False, fix_dims=True):
     
     
     #plot the edges
-    plt.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(-1), 'k')
-    plt.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(x.shape[0]), 'k')
+    ax.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(-1), 'k')
+    ax.plot(np.arange(-1,x.shape[1]+1), np.ones(x.shape[1]+2)*(x.shape[0]), 'k')
     
-    plt.plot(np.ones(x.shape[0]+2)*(-1), np.arange(-1,x.shape[0]+1), 'k')
-    plt.plot(np.ones(x.shape[0]+2)*(x.shape[1]), np.arange(-1,x.shape[0]+1), 'k')
+    ax.plot(np.ones(x.shape[0]+2)*(-1), np.arange(-1,x.shape[0]+1), 'k')
+    ax.plot(np.ones(x.shape[0]+2)*(x.shape[1]), np.arange(-1,x.shape[0]+1), 'k')
     
     if return_plot:
         return ax
