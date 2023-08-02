@@ -25,6 +25,10 @@ n_blocks = number_of_blocks((nx_total, ny_total), size)
 # local size
 nx, ny = width_height(rank, nx_total, ny_total, n_blocks)
 
+nx_opt = nx_total//n_blocks[0]
+ny_opt = ny_total//n_blocks[1]
+block_pos = (rank // n_blocks[1], rank % n_blocks[1])
+
 # Initialize weights and discrete direction vectors
 weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
 c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
@@ -42,10 +46,6 @@ rank_right = rank + 1
 rank_left = rank - 1
 rank_up = rank - n_blocks[1]
 rank_down = rank + n_blocks[1]
-
-print(n_blocks)
-print(f"Rank: {rank}, size: {nx, ny}, borders: {borders}")
-print(f"Rank: {rank}, neighbors: {rank_right, rank_up, rank_left, rank_down}")
 
 # Loop over timesteps
 for idx_time in range(n_timesteps):
@@ -75,19 +75,20 @@ for idx_time in range(n_timesteps):
             comm.Send(f[:, -2, :].copy(), rank_down)
 
     if rank == 0:
-        f = -5 * f
+        pass#f = -5 * f
 
     # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
-        f_full = np.empty((9, nx_total, ny_total))
+        f_full = np.zeros((9, nx_total, ny_total))
         rho_full = np.ones((nx_total, ny_total))
         v_full = np.zeros((2, nx_total, ny_total))
-        print(f"Rank: {rank}, {f[:,1:-1,1:-1].copy()}")
-        comm.Gather(f[:,1:-1,1:-1].copy(), f_full, root=0)
+        if rank == 0:
+            comm.Gather(f[:,1:-1,1:-1].copy(),
+                        f_full[:, (nx_opt * block_pos[0]):(nx_opt * block_pos[0] + nx), (ny_opt * block_pos[1]):(ny_opt * block_pos[1] + ny)].copy(),
+                        root=0)
         f_full, rho_full, v_full = recalculate_functions(f_full, rho_full, v_full, c)
         if rank == 0:
-            print(f_full)
             ax = plot_velocity(f_full, v_full, return_plot=True)
             # x_width = nx_total//n_blocks[0]
             # y_width = ny_total//n_blocks[1]

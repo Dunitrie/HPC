@@ -27,7 +27,6 @@ def plot_velocity(f, v, return_plot=False):
     ax.axis('equal')
     ax.set_xlim(-2, f.shape[2]+1)
     ax.set_ylim(-2, f.shape[1]+1)
-    print(f.shape)
     ax.set_title("Velocity field")
     ax.invert_yaxis()
     
