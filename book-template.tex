@@ -1,0 +1,174 @@
+\documentclass[a4paper,11pt]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[english]{babel}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\usepackage{listings} % package for listing parts of code
+
+\renewcommand*\footnoterule{}
+
+\makeatletter
+\renewcommand{\@chapapp}{}% Not necessary...
+\newenvironment{chapquote}[2][2em]
+  {\setlength{\@tempdima}{#1}%
+   \def\chapquote@author{#2}%
+   \parshape 1 \@tempdima \dimexpr\textwidth-2\@tempdima\relax%
+   \itshape}
+  {\par\normalfont\hfill--\ \chapquote@author\hspace*{\@tempdima}\par\bigskip}
+\makeatother
+
+
+
+
+% Book's title and subtitle
+\title{\Huge \textbf{High Performance Computing with Python} \vspace{4mm} \\ \huge Final Report}
+% Author
+% \author{\textsc{First-name Last-name}\footnote{email address}}
+\author{\textsc{First-name Last-name} \\ \vspace{3mm}\text{matriculation number}  \\
+\vspace{3mm}\text{email-address}}
+
+
+\begin{document}
+
+\makeatletter
+    \begin{titlepage}
+        \begin{center}
+            \includegraphics[width=0.5\linewidth]{logos/Uni_Logo-Grundversion_E1_A4_CMYK.eps}\\[4ex]
+            {\huge \bfseries  \@title }\\[2ex] 
+            {\LARGE  \@author}\\[30ex] 
+            {\large \@date}
+        \end{center}
+    \end{titlepage}
+\makeatother
+\thispagestyle{empty}
+\newpage
+
+
+
+\tableofcontents
+
+
+\chapter{Chapter 1}
+
+This is an example of a citation \cite{timm2016lattice}. The corresponding paper can be found in the bibliography section at the end of this document.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis risus ante, auctor et pulvinar non, posuere ac lacus. Praesent egestas nisi id metus rhoncus ac lobortis sem hendrerit. Etiam et sapien eget lectus interdum posuere sit amet ac urna.
+
+Example of normal equation
+\begin{equation}\label{eq:LBE}
+f_i(\mathbf{x}_j+\mathbf{c}_i\cdot\Delta t,t+\Delta t)=f_i(\mathbf{x}_j,t)
+-\omega \left( f_i(\mathbf{x}_j,t)-f_i^\text{eq}(\mathbf{x}_j,t) \right)
+\end{equation}
+
+Example of aligned equation:
+\begin{align}
+  \rho(\mathbf{x}_j, t) &= \sum_i f_i(\mathbf{x}_j, t) \\
+  \mathbf{u}(\mathbf{x}_j, t) &= \frac{1}{ \rho(\mathbf{x}_j, t)}
+    \sum_i \mathbf{c}_i f_i(\mathbf{x}_j, t)
+\end{align}
+
+\section{section title}
+Gliederung:\\
+Generelle Beschreibung: Simulation eines Wasserbeckens mit verschiedenen Szenarien wie an den Grenzen des Beckens verfahren wird: Zurückschwappen (bounce back), eine bewegende Begrenzung (moving wall) oder auch durchlässige Membran (period boundary conditions). Außerdem werden wir eine Simulation mit angelegtem Druckfluss durchführen. Zentral für das Projekt ist die Simulation  des Sliding lids, bei dem wir eine bewegende Begrenzung für die obere Kante und drei unbewegliche Wände an den restlichen Kanten anlegen. Dieses Szenario werden wir auch parallelisieren, um somit viele Rechenschritte parallel auszuführen und Zeit einzusparen.\\
+
+Generelles Setup:\\
+$300x300$ Grid, 9 channels zur Simulation der Fließrichtugnen der Wasserpartikel (c-Vektor), Dichteverteilung f um zu beschreiben, wie viele Partikel sich zu jedem Simulationszeitpunkt $t_i$ auf jedem Punkt des Gitters befinden. Wir initialisieren die Anfangsverteilung mit $(4/9, 1/9, ...)$
+Wir berechnen für die Analyse des Ergebnisses die Dichte an jedem Gitterpunkt (Summe über alle Channels) (Note: rho ist analytisch, f simuliert die Wahrscheinlichkeitsverteilung der Wassermoleküle) und die Durchschnittsgeschwindigkeit an jedem Gitterpunkt (sprich wie stark bewegt sich "Der Gitterpunkt" in welche Channelrichtung)\\
+
+Streaming Simulation:\\ np.roll: Bewege die Wassermoleküle, die sich laut f auf einem Gitterpunkt mit entsprechender Orientierung (0-8) befinden, einen Gitterpunkt (nach ihrer Orientierung) weiter. Ohne Begrenzungen laufen die Moleküle periodisch durch das Gitter, d.h. (je nach Orientierung) von der linken Begrenzung der graphischen Darstellung zur rechten, von der oberen Begrenzung der graphischen Darstellung zur unteren usw. Insbesondere fließen die Moleküle von der rechten oberen Ecke im nächsten Schritt in die untere linke Ecke der graphischen Darstellen/unseres Beckens.\\
+
+Sich ändernde Geschwindigkeit: Shear Waves\\
+Simulationscheck: Wellenförmiger Impuls im Wasserbecken verschwindet nach bestimmter Zeit -> Shear Wave Initialisierung\\
+
+Szenarien: a) Periodic boundary conditions in x-direction, moving wall top, rigid wall bottom
+b) Poiseuille Flow: pressure gradient in x-direction
+c) Sliding lid: Moving wall top, rigid walls other sides	\\
+
+Parallelization:\\
+Sliding Lid with parallel computations\\
+
+Integrate Plots as required:
+Shear Wave: Density evolution, velocity evolution, measured viscosity\\
+Couette Flow: Velocity Evolution\\
+Poiseuille Flow: Velocity Evolution\\
+Sliding Lid: Stable Simulation for long time (100000 timesteps)\\
+Parallelization: Scaling (Lattice Boltzmann implementation as a function of the number of CPUs (MPI processes) used)\\
+
+
+\begin{itemize}
+  \item Example of a list
+  \item Example of a list
+  \item Example of a list
+\end{itemize}
+
+\chapter{Chapter 2}
+
+\begin{figure}[h!]
+  \begin{center}
+   \includegraphics[width=10cm]{logos/Gitter_LBM.png}
+   \caption{example figure}
+  \label{fig:mesh}
+  \end{center}
+\end{figure}
+
+\section{Section title}
+Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. \\ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+id convallis magna eros nec metus. Sed vel ligula justo, sit amet vestibulum dolor. Sed vitae augue sit amet magna ullamcorper suscipit. Quisque dictum ipsum a sapien egestas facilisis.
+
+\begin{table}[ht]
+\caption{Sample table} % title of Table
+\centering % used for centering table
+\begin{tabular}{c c c c}
+% centered columns (4 columns)
+\hline\hline %inserts double horizontal lines
+S. No. & Column\#1 & Column\#2 & Column\#3 \\ [0.5ex]
+% inserts table
+%heading
+\hline % inserts single horizontal line
+1 & 50 & 837 & 970 \\
+2 & 47 & 877 & 230 \\
+3 & 31 & 25 & 415 \\
+4 & 35 & 144 & 2356 \\
+5 & 45 & 300 & 556 \\ [1ex] % [1ex] adds vertical space
+\hline %inserts single line
+\end{tabular}
+\label{table:nonlin} % is used to refer this table in the text
+\end{table}
+
+\section{Code listing}
+
+here we provide a short example of code listing. For further information you can take look here:
+
+\texttt{https://www.overleaf.com/learn/latex/code\_listing}
+
+This is just meant to used if you think that there is some relevant part of code to be shown. Please do not append your whole implementation in the report.
+\begin{lstlisting}[language=Python]
+import numpy as np
+    
+def incmatrix(genl1,genl2):
+    m = len(genl1)
+    n = len(genl2)
+    M = None #to become the incidence matrix
+    VT = np.zeros((n*m,1), int)  #dummy variable
+
+\end{lstlisting}
+
+\newpage
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. \\ Lorem ipsum list:
+
+
+
+
+\bibliographystyle{unsrt}
+\bibliography{biblio}
+% include Book of Mohamad
+
+\end{document}
