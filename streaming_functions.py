@@ -1,9 +1,11 @@
 import numpy as np
 
-omega = 1  # Impact parameter of relaxation
-wall_speed = 1  # Speed of moving wall
+import matplotlib.pyplot as plt
 
-def recalculate_functions(f, rho, v, c):
+omega = 1  # Impact parameter of relaxation
+wall_speed = 0  # Speed of moving wall
+
+def recalculate_functions(f, rho, v, c, rank, step):
     """
     Recalculate density and average viscosity at each point after probability density function has been updated.
     See Milestone 1.
@@ -12,7 +14,7 @@ def recalculate_functions(f, rho, v, c):
     v_noscale = np.einsum("ijk, il -> ljk", f, c)  # velocity field
     v = np.einsum("ijk, jk -> ijk", v_noscale, np.reciprocal(rho))  # divide by rho to get averange velocity
 
-    return f, rho, v
+    return rho, v
 
 def calc_equi(f, rho, v, c, weights):
     """
@@ -73,29 +75,41 @@ def border_control(f, borders):
 
     # Set dry notes to 0.
     if borders[0]:
-        f[:, :, -1] = 0
+        f[:, :, -1] = 10
     if borders[1]:
-        f[:, 0, :] = 0
+        f[:, 0, :] = 10
     if borders[2]:
-        f[:, :, 0] = 0
+        f[:, :, 0] = 10
     if borders[3]:
-        f[:, -1, :] = 0
+        f[:, -1, :] = 10
 
     return f
 
-def streaming(f, rho, v, c, weights, borders):
+def streaming(f, rho, v, c, weights, borders, rank, step):
     """
     Pipeline of one complete streaming step.
     """
+    if step < 3 and rank < 1:
+        print(f"step: {step}, start, rank: {rank}\n {np.round(f, 0)}\n")
+    
     f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
 
     f += omega * (f_equi - f)  # Relaxation
 
+    if step < 3 and rank < 1:
+        print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f, 0)}\n")
+
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
+    if step < 3 and rank < 1:
+        print(f"step: {step}, rolled, rank: {rank}\n {np.round(f, 0)}\n")
+
     f = border_control(f, borders)  # Handle (global) boundary conditions
-    
-    f, rho, v = recalculate_functions(f, rho, v, c)  # Update values
+
+    if step < 3 and rank < 1:
+        print(f"step: {step}, end, rank: {rank}\n {np.round(f, 0)}\n")
+
+    rho, v = recalculate_functions(f, rho, v, c, rank, step)  # Update values
 
     return f, rho, v
