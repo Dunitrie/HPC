@@ -89,26 +89,26 @@ def streaming(f, rho, v, c, weights, borders, rank, step):
     """
     Pipeline of one complete streaming step.
     """
-    if step < 3 and rank < 1:
-        print(f"step: {step}, start, rank: {rank}\n {np.round(f, 0)}\n")
+    if (step > 0 and step < 3) and rank < 2:
+        print(f"step: {step}, start, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
     
     f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
 
     f += omega * (f_equi - f)  # Relaxation
 
-    if step < 3 and rank < 1:
-        print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f, 0)}\n")
+    if (step > 0 and step < 3) and rank < 2:
+        print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
 
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
-    if step < 3 and rank < 1:
-        print(f"step: {step}, rolled, rank: {rank}\n {np.round(f, 0)}\n")
+    if (step > 0 and step < 3) and rank < 2:
+        print(f"step: {step}, rolled, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
 
     f = border_control(f, borders)  # Handle (global) boundary conditions
 
-    if step < 3 and rank < 1:
-        print(f"step: {step}, end, rank: {rank}\n {np.round(f, 0)}\n")
+    if (step > 0 and step < 3) and rank < 2:
+        print(f"step: {step}, end, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
 
     rho, v = recalculate_functions(f, rho, v, c, rank, step)  # Update values
 

@@ -14,12 +14,12 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
-n_timesteps = 50
-n_plots = 1
+n_timesteps = 5
+n_plots = 5
 
 # Initialize Grid:
-nx_total = 8  # num of rows
-ny_total = 6  # num of columns
+nx_total = 20  # num of rows
+ny_total = 16  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
@@ -56,26 +56,39 @@ for idx_time in range(n_timesteps):
     f, rho, v = streaming(f, rho, v, c, weights, borders, rank, idx_time)
 
     # Communicate the outermost grid points to neighboring blocks for the next step
+    # if not borders[0]:
+    #     if not borders[2]:
+    #         comm.Sendrecv(f[:, :, -2].copy(), rank_right, recvbuf=f[:, :, 0].copy(), source = rank_left)
+    #     else:
+    #         comm.Send(f[:, :, -2].copy(), rank_right)
+    # if not borders[1]:
+    #     if not borders[3]:
+    #         comm.Sendrecv(f[:, 1, :].copy(), rank_up, recvbuf=f[:, -1, :].copy(), source = rank_down)
+    #     else:
+    #         comm.Send(f[:, 1, :].copy(), rank_up)
+    # if not borders[2]:
+    #     if not borders[0]:
+    #         comm.Sendrecv(f[:, :, 1].copy(), rank_left, recvbuf=f[:, :, -1].copy(), source = rank_right)
+    #     else:
+    #         comm.Send(f[:, :, 1].copy(), rank_left)
+    # if not borders[3]:
+    #     if not borders[1]:
+    #         comm.Sendrecv(f[:, -2, :].copy(), rank_down, recvbuf=f[:, 0, :].copy(), source = rank_up)
+    #     else:
+    #         comm.Send(f[:, -2, :].copy(), rank_down)
+
     if not borders[0]:
-        if not borders[2]:
-            comm.Sendrecv(f[:, :, -2].copy(), rank_right, recvbuf=f[:, :, 0].copy(), source = rank_left)
-        else:
-            comm.Send(f[:, :, -2].copy(), rank_right)
+        comm.Send(f[:, :, -2].copy(), rank_right)
+        comm.Recv(f[:, :, -1].copy(), rank_right)
     if not borders[1]:
-        if not borders[3]:
-            comm.Sendrecv(f[:, 1, :].copy(), rank_up, recvbuf=f[:, -1, :].copy(), source=rank_down)
-        else:
-            comm.Send(f[:, 1, :].copy(), rank_up)
+        comm.Send(f[:, 1, :].copy(), rank_up)
+        comm.Recv(f[:, 0, :].copy(), rank_up)
     if not borders[2]:
-        if not borders[0]:
-            comm.Sendrecv(f[:, :, 1].copy(), rank_left, recvbuf=f[:, :, -1].copy(), source = rank_right)
-        else:
-            comm.Send(f[:, :, 1].copy(), rank_left)
+        comm.Send(f[:, :, 1].copy(), rank_left)
+        comm.Recv(f[:, :, 0].copy(), rank_left)
     if not borders[3]:
-        if not borders[1]:
-            comm.Sendrecv(f[:, -2, :].copy(), rank_down, f[:, 0, :].copy(), source = rank_up)
-        else:
-            comm.Send(f[:, -2, :].copy(), rank_down)
+        comm.Send(f[:, -2, :].copy(), rank_down)
+        comm.Recv(f[:, -1, :].copy(), rank_down)
 
     # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
