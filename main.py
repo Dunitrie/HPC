@@ -5,7 +5,9 @@ from process_coordination import width_height, bool_boundaries, number_of_blocks
 from streaming_functions import streaming, recalculate_functions
 from plotting_functions import plot_velocity, plot_velocity_slice
 
+import pickle
 import warnings
+
 
 np.seterr(all="raise")
 
@@ -76,20 +78,52 @@ for idx_time in range(n_timesteps):
     #         comm.Sendrecv(f[:, -2, :].copy(), rank_down, recvbuf=f[:, 0, :].copy(), source = rank_up)
     #     else:
     #         comm.Send(f[:, -2, :].copy(), rank_down)
+    
+    
+    
+    """
+    README:
+    Wie auch immer funktioniert die kleingeschriebene Variante so, wie wir wollen.
+    Kommunikation steht. Gerne nachprüfen. Ich printe jetzt immer nur den Channel 1, damit es nicht so unübersichtlich wird. 
+    Prints dann halt einfach löschen, nur der Transparenz wegen, dass Du es nachvollziehen kannst.
+    Nicht, dass deshalb jetzt so viel Besseres rauskommt, aber immerhin kommunizieren sie.
+    
+    Ich fange jetzt Errors, wenn die Errors auftreten, die bei Recv kamen. Das werden wir natürlich auch irgendwann wieder rausmachen. 
+    War nur einfacher zum Debuggen.
+    """
+    try:
+        if not borders[0]:
+            comm.send(f[:, :, -2].copy(), rank_right)
+            data = comm.recv(source=rank_right)
+            print(f"rank {rank} sent this data: {f[1, :, -2].copy()} to rank {rank_right}.")
+            print(f"rank {rank} received this data-shape: {data[1]} from rank {rank_right}.")
+            f[:, :, -1] = data
+        if not borders[1]:
+            comm.send(f[:, 1, :].copy(), rank_up)
+            data = comm.recv(source=rank_up)
+            print(f"rank {rank} sent this data: {f[1, 1, :].copy()} to rank {rank_up}.")
+            print(f"rank {rank} received this data: {data[1]} from rank {rank_up}.")
 
-    if not borders[0]:
-        comm.Send(f[:, :, -2].copy(), rank_right)
-        comm.Recv(f[:, :, -1].copy(), rank_right)
-    if not borders[1]:
-        comm.Send(f[:, 1, :].copy(), rank_up)
-        comm.Recv(f[:, 0, :].copy(), rank_up)
-    if not borders[2]:
-        comm.Send(f[:, :, 1].copy(), rank_left)
-        comm.Recv(f[:, :, 0].copy(), rank_left)
-    if not borders[3]:
-        comm.Send(f[:, -2, :].copy(), rank_down)
-        comm.Recv(f[:, -1, :].copy(), rank_down)
+            f[:, 0, :] = data
+        if not borders[2]:
+            comm.send(f[:, :, 1].copy(), rank_left)
+            
+            
+            data = comm.recv(source=rank_left)
+            print(f"rank {rank} sent this data: {f[1, :, 1].copy()} to rank {rank_left}.")
+            print(f"rank {rank} received this data: {data[1]} from rank {rank_left}.")
 
+            f[:, :, 0] = data
+        if not borders[3]:
+            comm.send(f[:, -2, :].copy(), rank_down)
+            data = comm.recv(source=rank_down)
+            print(f"rank {rank} sent this data: {f[1, -2, :].copy()} to rank {rank_down}.")
+            print(f"rank {rank} received this data: {data[1]} from rank {rank_down}.")
+
+            f[:, -1, :] = data
+    except pickle.UnpicklingError as e:
+        print(f"Rank {rank} had an UnpicklingError: \n {e}")
+        
     # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0
