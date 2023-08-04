@@ -43,8 +43,13 @@ def border_control(f, borders):
         rho_N[:] = f[0, 1, :] + f[1, 1, :] + f[3, 1, :] +\
             2 * (f[2, 1, :] + f[6, 1, :] + f[5, 1, :])
         f[4, 1, :] = f[2, 0, :]
-        f[7, 1, :] = f[5, 0, :] + 1/2 * (f[1, 1, :] - f[3, 1, :]) - 1/2 * rho_N * wall_speed
-        f[8, 1, :] = f[6, 0, :] + 1/2 * (f[3, 1, :] - f[1, 1, :]) + 1/2 * rho_N * wall_speed
+        # set corner points seperately as we need information from the dry nodes before computing the border control
+        f[7, 1, 2:-2] = f[5, 0, 2:-2] + 1/2 * (f[1, 1, 2:-2] - f[3, 1, 2:-2]) - 1/2 * rho_N[2:-2] * wall_speed
+        f[7, 1, 1] = f[5, 0 , 1] - 1/2 * rho_N[1] * wall_speed
+        f[7, 1, -2] = f[5, 0 , -2] - 1/2 * rho_N[-2] * wall_speed
+        f[8, 1, 2:-2] = f[6, 0, 2:-2] + 1/2 * (f[3, 1, 2:-2] - f[1, 1, 2:-2]) + 1/2 * rho_N[2:-2] * wall_speed
+        f[8, 1, 1] = f[6, 0, 1] + 1/2 * rho_N[1] * wall_speed
+        f[8, 1, -2] = f[6, 0 , -2] + 1/2 * rho_N[-2] * wall_speed
 
     if borders[0]:
         # eastern boundary
@@ -52,8 +57,12 @@ def border_control(f, borders):
         f[8, :, -1] = np.roll(f[8, :, -1], shift=(-1, 0))
 
         f[3, :, -2] = f[1, :, -1]
-        f[6, :, -2] = f[8, :, -1] + 1/2 * (f[2, :, -2] - f[4, :, -2])
-        f[7, :, -2] = f[5, :, -1] + 1/2 * (f[4, :, -2] - f[2, :, -2])
+        f[6, 2:-2, -2] = f[8, 2:-2, -1] + 1/2 * (f[2, 2:-2, -2] - f[4, 2:-2, -2])
+        f[6, 1, -2] = f[8, 1, -1]
+        f[6, -2, -2] = f[8, -2, -1]
+        f[7, 2:-2, -2] = f[5, 2:-2, -1] + 1/2 * (f[4, 2:-2, -2] - f[2, 2:-2, -2])
+        f[7, 1, -2] = f[5, 1, -1]
+        f[7, -2, -2] = f[5, -2, -1]
 
     if borders[2]:
         # western boundary
@@ -61,17 +70,26 @@ def border_control(f, borders):
         f[7, :, 0] = np.roll(f[7, :, 0], shift=(-1, 0))
 
         f[1, :, 1] = f[3, :, 0]
-        f[5, :, 1] = f[7, :, 0] + 1/2 * (f[2, :, 1] - f[4, :, 1])
-        f[8, :, 1] = f[6, :, 0] + 1/2 * (f[4, :, 1] - f[2, :, 1])
+        f[5, 2:-2, 1] = f[7, 2:-2, 0] + 1/2 * (f[2, 2:-2, 1] - f[4, 2:-2, 1])
+        f[5, 1, 1] = f[7, 1, 0]
+        f[5, -2, 1] = f[7, -2, 0]
+        f[8, 2:-2, 1] = f[6, 2:-2, 0] + 1/2 * (f[4, 2:-2, 1] - f[2, 2:-2, 1])
+        f[8, 1, 1] = f[6, 1, 0]
+        f[8, -2, 1] = f[6, -2, 0]
+
 
     if borders[3]:
         # southern boundary
-        f[7, -1] = np.roll(f[7, -1], shift=1)
-        f[8, -1] = np.roll(f[8, -1], shift=-1)
+        f[7, -1] = np.roll(f[7, -1], shift=(0,1))
+        f[8, -1] = np.roll(f[8, -1], shift=(0,-1))
 
         f[2, -2, :] = f[4, -1, :]
-        f[5, -2, :] = f[7, -1, :] + 1/2 * (f[1, -2, :] - f[3, -2, :])
-        f[6, -2, :] = f[8, -1, :] + 1/2 * (f[3, -2, :] - f[1, -2, :])
+        f[5, -2, 2:-2] = f[7, -1, 2:-2] + 1/2 * (f[1, -2, 2:-2] - f[3, -2, 2:-2])
+        f[5, -2, 1] = f[7, -1, 1]
+        f[5, -2, -2] = f[7, -1, -2]
+        f[6, -2, 2:-2] = f[8, -1, 2:-2] + 1/2 * (f[3, -2, 2:-2] - f[1, -2, 2:-2])
+        f[6, -2, 1] = f[8, -1, 1]
+        f[6, -2, -2] = f[8, -1, -2]
 
     # Set dry notes to 0.
     if borders[0]:
@@ -89,25 +107,26 @@ def streaming(f, rho, v, c, weights, borders, rank, step):
     """
     Pipeline of one complete streaming step.
     """
-    if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, start, rank: {rank}\n {f[1:5, :, :]}\n")
-    
+    if (step < 3) and rank < 2:
+        print(f"step: {step}, start, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
+
     f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
 
-    f += omega * (f_equi - f)  # Relaxation
+    f += omega * (f_equi - f)  # Relaxation   
 
-    if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, relaxed, rank: {rank}\n {f[1:5, :, :]}\n")
+    if (step < 3) and rank < 2:    
+        print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
+        #print(f"equi: {np.round(f_equi[1:5, :, :], 0)}")
 
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
-    if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, rolled, rank: {rank}\n {f[1:5, :, :]}\n")
+    if (step < 3) and rank < 2:
+        print(f"step: {step}, rolled, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
 
     f = border_control(f, borders)  # Handle (global) boundary conditions
-
-    if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, end, rank: {rank}\n {f[1:5, :, :]}\n")
+    
+    if (step < 3) and rank < 2:
+        print(f"step: {step}, end, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
 
     return f, rho, v
