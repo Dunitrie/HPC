@@ -8,7 +8,6 @@ from plotting_functions import plot_velocity, plot_velocity_slice
 import pickle
 import warnings
 
-
 np.seterr(all="raise")
 
 # Initialize parallelization 
@@ -57,74 +56,24 @@ for idx_time in range(n_timesteps):
     # Calculate the streaming step wrt (global) boundary conditions
     f, rho, v = streaming(f, rho, v, c, weights, borders, rank, idx_time)
 
-    # Communicate the outermost grid points to neighboring blocks for the next step
-    # if not borders[0]:
-    #     if not borders[2]:
-    #         comm.Sendrecv(f[:, :, -2].copy(), rank_right, recvbuf=f[:, :, 0].copy(), source = rank_left)
-    #     else:
-    #         comm.Send(f[:, :, -2].copy(), rank_right)
-    # if not borders[1]:
-    #     if not borders[3]:
-    #         comm.Sendrecv(f[:, 1, :].copy(), rank_up, recvbuf=f[:, -1, :].copy(), source = rank_down)
-    #     else:
-    #         comm.Send(f[:, 1, :].copy(), rank_up)
-    # if not borders[2]:
-    #     if not borders[0]:
-    #         comm.Sendrecv(f[:, :, 1].copy(), rank_left, recvbuf=f[:, :, -1].copy(), source = rank_right)
-    #     else:
-    #         comm.Send(f[:, :, 1].copy(), rank_left)
-    # if not borders[3]:
-    #     if not borders[1]:
-    #         comm.Sendrecv(f[:, -2, :].copy(), rank_down, recvbuf=f[:, 0, :].copy(), source = rank_up)
-    #     else:
-    #         comm.Send(f[:, -2, :].copy(), rank_down)
-    
-    
-    
-    """
-    README:
-    Wie auch immer funktioniert die kleingeschriebene Variante so, wie wir wollen.
-    Kommunikation steht. Gerne nachprüfen. Ich printe jetzt immer nur den Channel 1, damit es nicht so unübersichtlich wird. 
-    Prints dann halt einfach löschen, nur der Transparenz wegen, dass Du es nachvollziehen kannst.
-    Nicht, dass deshalb jetzt so viel Besseres rauskommt, aber immerhin kommunizieren sie.
-    
-    Ich fange jetzt Errors, wenn die Errors auftreten, die bei Recv kamen. Das werden wir natürlich auch irgendwann wieder rausmachen. 
-    War nur einfacher zum Debuggen.
-    """
     # Order of communcations is important in order that all the corner ghost points will get the diagonal adjacent values via two-step-communcation.
-    try:
-        if not borders[0]:
-            comm.send(f[:, :, -2].copy(), rank_right)
-            data = comm.recv(source=rank_right)
-            print(f"rank {rank} sent this data: {f[1, :, -2].copy()} to rank {rank_right}.")
-            print(f"rank {rank} received this data-shape: {data[1]} from rank {rank_right}.")
-            f[:, :, -1] = data
-        if not borders[2]:
-            comm.send(f[:, :, 1].copy(), rank_left)
-            
-            
-            data = comm.recv(source=rank_left)
-            print(f"rank {rank} sent this data: {f[1, :, 1].copy()} to rank {rank_left}.")
-            print(f"rank {rank} received this data: {data[1]} from rank {rank_left}.")
+    if not borders[0]:
+        comm.send(f[:, :, -2].copy(), rank_right)
+        data = comm.recv(source=rank_right)
+        f[:, :, -1] = data
+    if not borders[2]:
+        comm.send(f[:, :, 1].copy(), rank_left)
+        data = comm.recv(source=rank_left)
+        f[:, :, 0] = data
+    if not borders[1]:
+        comm.send(f[:, 1, :].copy(), rank_up)
+        data = comm.recv(source=rank_up)
+        f[:, 0, :] = data
+    if not borders[3]:
+        comm.send(f[:, -2, :].copy(), rank_down)
+        data = comm.recv(source=rank_down)
+        f[:, -1, :] = data
 
-            f[:, :, 0] = data
-        if not borders[1]:
-            comm.send(f[:, 1, :].copy(), rank_up)
-            data = comm.recv(source=rank_up)
-            print(f"rank {rank} sent this data: {f[1, 1, :].copy()} to rank {rank_up}.")
-            print(f"rank {rank} received this data: {data[1]} from rank {rank_up}.")
-
-            f[:, 0, :] = data
-        if not borders[3]:
-            comm.send(f[:, -2, :].copy(), rank_down)
-            data = comm.recv(source=rank_down)
-            print(f"rank {rank} sent this data: {f[1, -2, :].copy()} to rank {rank_down}.")
-            print(f"rank {rank} received this data: {data[1]} from rank {rank_down}.")
-
-            f[:, -1, :] = data
-    except pickle.UnpicklingError as e:
-        print(f"Rank {rank} had an UnpicklingError: \n {e}")
-    
     rho, v = recalculate_functions(f, rho, v, c, rank, idx_time)  # Update values
 
     # Plot average velocity vectors
