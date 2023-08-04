@@ -8,24 +8,22 @@ from plotting_functions import plot_velocity, plot_velocity_slice
 import pickle
 import warnings
 
-np.seterr(all="raise")
-
 # Initialize parallelization 
 comm = MPI.COMM_WORLD
 size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
-n_timesteps = 5
-n_plots = 5
+n_timesteps = 20
+n_plots = 20
 
 # Initialize Grid:
-nx_total = 30  # num of rows
-ny_total = 20  # num of columns
+nx_total = 16  # num of rows
+ny_total = 10  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
 n_blocks = number_of_blocks((nx_total, ny_total), size)
-print(f"n_blocks: {n_blocks}")
+
 # Initialize local grid parameters (local grid is the one of the block of this process):
 # local size
 nx, ny = width_height(rank, nx_total, ny_total, n_blocks)
@@ -44,7 +42,6 @@ f = np.einsum("i,jk -> ijk", weights, np.ones((nx+2, ny+2)))  # probability dens
 
 # Check on which side this block borders another block or the boundary
 borders = bool_boundaries(rank, n_blocks)
-print(f"Rank: {rank}, n_blocks:{n_blocks}, borders: {borders}")
 
 # Ranks of the processes of the neighboring blocks (only correct and used when theres no boundary on this side)
 rank_right = rank + 1

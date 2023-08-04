@@ -23,7 +23,7 @@ def number_of_blocks(dim, n_processes: int) -> list:
     idx = 0
     for idx1, combination in enumerate(combinations):
         
-        new_score = np.linalg.norm(factor - combination[1]/combination[0])
+        new_score = np.linalg.norm(factor - combination[0]/combination[1])
         #print(score, new_score)
         if new_score < score:
             score = new_score
