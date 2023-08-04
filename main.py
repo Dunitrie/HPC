@@ -14,11 +14,11 @@ size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
 n_timesteps = 20
-n_plots = 20
+n_plots = 5
 
 # Initialize Grid:
-nx_total = 16  # num of rows
-ny_total = 10  # num of columns
+nx_total = 20  # num of rows
+ny_total = 16  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
