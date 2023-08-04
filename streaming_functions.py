@@ -50,10 +50,10 @@ def border_control(f, borders):
         # we do not have the correct values for f[1] and f[3] at this stage, so  compute manually corner grid point
         if borders[0]:
             f[7, 1, -2] = f[5, 0 , -2] - 1/2 * rho_N[-2] * wall_speed
-            f[8, 1, -2] = f[6, 0, -2]
+            f[8, 1, -2] = f[6, 0, -2] + 1/2 * rho_N[-2] * wall_speed
 
         if borders[2]:
-            f[7, 1, 1] = f[5, 0, 1]
+            f[7, 1, 1] = f[5, 0, 1] - 1/2 * rho_N[1] * wall_speed
             f[8, 1, 1] = f[6, 0, 1] + 1/2 * rho_N[1] * wall_speed
 
     if borders[0]:
