@@ -51,12 +51,14 @@ def border_control(f, borders):
         f[4, 1, :] = f[2, 0, :]
         # set corner points seperately as we need information from the dry nodes before computing the border control
         f[7, 1, 2:-2] = f[5, 0, 2:-2] + 1/2 * (f[1, 1, 2:-2] - f[3, 1, 2:-2]) - 1/2 * rho_N[2:-2] * wall_speed
-        f[7, 1, 1] = f[5, 0, 1]
+        # we do not have the correct values for f[1] and f[3] at this stage, so  compute manually corner grid point
         if borders[0]:
             f[7, 1, -2] = f[5, 0 , -2] - 1/2 * rho_N[-2] * wall_speed
+            f[8, 1, -2] = f[6, 0, -2]
+
         f[8, 1, 2:-2] = f[6, 0, 2:-2] + 1/2 * (f[3, 1, 2:-2] - f[1, 1, 2:-2]) + 1/2 * rho_N[2:-2] * wall_speed
-        f[8, 1, -2] = f[6, 0, -2]
         if borders[2]:
+            f[7, 1, 1] = f[5, 0, 1]
             f[8, 1, 1] = f[6, 0, 1] + 1/2 * rho_N[1] * wall_speed
 
     if borders[0]:
@@ -65,12 +67,17 @@ def border_control(f, borders):
         f[8, :, -1] = np.roll(f[8, :, -1], shift=(-1, 0))
 
         f[3, :, -2] = f[1, :, -1]
-        f[6, 1:-2, -2] = f[8, 1:-2, -1] + 1/2 * (f[2, 1:-2, -2] - f[4, 1:-2, -2])
+        f[6, 2:-2, -2] = f[8, 2:-2, -1] + 1/2 * (f[2, 2:-2, -2] - f[4, 2:-2, -2])
         if borders[3]:
+            # here only wrt to southern boundary, as we treated northern boundary above
             f[6, -2, -2] = f[8, -2, -1]
+            f[7, -2, -2] = f[5, -2, -1]
+        if borders[1]:
+            f[6, 1, -2] = f[8, 1, -1]
         f[7, 2:-2, -2] = f[5, 2:-2, -1] + 1/2 * (f[4, 2:-2, -2] - f[2, 2:-2, -2])
         #f[7, 1, -2] = f[5, 1, -1]
-        f[7, -2, -2] = f[5, -2, -1]
+        
+        
 
     if borders[2]:
         # western boundary
@@ -78,29 +85,34 @@ def border_control(f, borders):
         f[7, :, 0] = np.roll(f[7, :, 0], shift=(-1, 0))
 
         f[1, :, 1] = f[3, :, 0]
-        f[5, 1:-2, 1] = f[7, 1:-2, 0] + 1/2 * (f[2, 1:-2, 1] - f[4, 1:-2, 1])
+        f[5, 2:-2, 1] = f[7, 2:-2, 0] + 1/2 * (f[2, 2:-2, 1] - f[4, 2:-2, 1])
         if borders[3]:
             f[5, -2, 1] = f[7, -2, 0]
+            f[8, -2, 1] = f[6, -2, 0]
+        if borders[1]:
+            f[5, 1, 1] = f[7, 1, 0]
+            # could be that its necessary to update f[8, 1, 1] once more, but this was done in borders[1]
+            #f[8, 1, 1] = f[6, 1, 0]
         f[8, 2:-2, 1] = f[6, 2:-2, 0] + 1/2 * (f[4, 2:-2, 1] - f[2, 2:-2, 1])
-        #f[8, 1, 1] = f[6, 1, 0]
-        f[8, -2, 1] = f[6, -2, 0]
+        
+        
 
 
     if borders[3]:
         # southern boundary
         f[7, -1] = np.roll(f[7, -1], shift=(0,1))
         f[8, -1] = np.roll(f[8, -1], shift=(0,-1))
-        print(f[7,:,:])
 
         f[2, -2, :] = f[4, -1, :]
         f[5, -2, 2:-2] = f[7, -1, 2:-2] + 1/2 * (f[1, -2, 2:-2] - f[3, -2, 2:-2])
-        #f[5, -2, 1] = f[7, -1, 1]
-        f[5, -2, -2] = f[7, -1, -2]
+        
+        if borders[0]:
+            f[5, -2, -2] = f[7, -1, -2]
+            #f[6, -2, -2] = f[8, -1, -2] done in borders[0]
         f[6, -2, 2:-2] = f[8, -1, 2:-2] + 1/2 * (f[3, -2, 2:-2] - f[1, -2, 2:-2])
-        f[6, -2, 1] = f[8, -1, 1]
-        #f[6, -2, -2] = f[8, -1, -2]
-        print(f[7, -2, 0])
-        print(f[7, -1, 1])
+        if borders[2]:
+            f[6, -2, 1] = f[8, -1, 1]
+            #f[5, -2, 1] = f[7, -1, 1] done in borders[2]
 
     # Set dry notes to 0.
     if borders[0]:
