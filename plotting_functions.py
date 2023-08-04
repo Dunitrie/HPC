@@ -26,7 +26,7 @@ def plot_velocity(f, v, return_plot=False):
     axes[0].set_xlabel('Y')
     axes[0].set_ylabel('X')
     #axes[0].axis('equal')
-    axes[0].set_xlim(-1, np.max(x)+1)
+    axes[0].set_xlim(-1, np.max(x)+2)
     axes[0].set_ylim(-1, np.max(y)+1)
     axes[0].set_title("Velocity field")
     axes[0].invert_yaxis()
@@ -40,8 +40,9 @@ def plot_velocity(f, v, return_plot=False):
     axes[0].plot(np.ones(x.shape[1]+2)*(x.shape[0]), np.arange(-1,x.shape[1]+1), 'k')
     
     rho = np.einsum('cij->ij', f)
-    axes[1].imshow(rho, aspect='auto')
-    axes[1].get_yaxis().tick_right()
+    im = axes[1].imshow(rho, aspect='auto')
+    plt.colorbar(im)
+    axes[1].get_yaxis().set_visible(False)
     axes[1].set_title("Density Plot")
     #axes[1].invert_yaxis()
     
