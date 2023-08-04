@@ -20,8 +20,8 @@ n_timesteps = 5
 n_plots = 5
 
 # Initialize Grid:
-nx_total = 20  # num of rows
-ny_total = 16  # num of columns
+nx_total = 30  # num of rows
+ny_total = 20  # num of columns
 
 # Arrange <size> blocks (num processes) as a optimized grid of
 # <n_blocks[0]> rows times <n_blocks[1]> columns.
@@ -39,7 +39,7 @@ weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
 c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
 
 # Initialize grid (add goast points or dry notes to each edge)
-rho = 0.01 * np.ones((nx+2, ny+2))  # density values
+rho = np.ones((nx+2, ny+2))  # density values
 v = np.zeros((2, nx+2, ny+2))  # average viscosity values
 f = np.einsum("i,jk -> ijk", weights, np.ones((nx+2, ny+2)))  # probability density function
 
@@ -91,6 +91,7 @@ for idx_time in range(n_timesteps):
     Ich fange jetzt Errors, wenn die Errors auftreten, die bei Recv kamen. Das werden wir natürlich auch irgendwann wieder rausmachen. 
     War nur einfacher zum Debuggen.
     """
+    # Order of communcations is important in order that all the corner ghost points will get the diagonal adjacent values via two-step-communcation.
     try:
         if not borders[0]:
             comm.send(f[:, :, -2].copy(), rank_right)
@@ -98,13 +99,6 @@ for idx_time in range(n_timesteps):
             print(f"rank {rank} sent this data: {f[1, :, -2].copy()} to rank {rank_right}.")
             print(f"rank {rank} received this data-shape: {data[1]} from rank {rank_right}.")
             f[:, :, -1] = data
-        if not borders[1]:
-            comm.send(f[:, 1, :].copy(), rank_up)
-            data = comm.recv(source=rank_up)
-            print(f"rank {rank} sent this data: {f[1, 1, :].copy()} to rank {rank_up}.")
-            print(f"rank {rank} received this data: {data[1]} from rank {rank_up}.")
-
-            f[:, 0, :] = data
         if not borders[2]:
             comm.send(f[:, :, 1].copy(), rank_left)
             
@@ -114,6 +108,13 @@ for idx_time in range(n_timesteps):
             print(f"rank {rank} received this data: {data[1]} from rank {rank_left}.")
 
             f[:, :, 0] = data
+        if not borders[1]:
+            comm.send(f[:, 1, :].copy(), rank_up)
+            data = comm.recv(source=rank_up)
+            print(f"rank {rank} sent this data: {f[1, 1, :].copy()} to rank {rank_up}.")
+            print(f"rank {rank} received this data: {data[1]} from rank {rank_up}.")
+
+            f[:, 0, :] = data
         if not borders[3]:
             comm.send(f[:, -2, :].copy(), rank_down)
             data = comm.recv(source=rank_down)
@@ -123,7 +124,9 @@ for idx_time in range(n_timesteps):
             f[:, -1, :] = data
     except pickle.UnpicklingError as e:
         print(f"Rank {rank} had an UnpicklingError: \n {e}")
-        
+    
+    rho, v = recalculate_functions(f, rho, v, c, rank, idx_time)  # Update values
+
     # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
         # stack everything in rank 0

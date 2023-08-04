@@ -5,18 +5,14 @@ import matplotlib.pyplot as plt
 omega = 1  # Impact parameter of relaxation
 wall_speed = 0  # Speed of moving wall
 
-nx_total = 20  # num of rows
-ny_total = 16  # num of columns
-
 def recalculate_functions(f, rho, v, c, rank, step):
     """
-    Recalculate density and average velocity at each point after probability density function has been updated.
+    Recalculate density and average viscosity at each point after probability density function has been updated.
     See Milestone 1.
     """
     rho = np.einsum("cij -> ij", f)  # density field
     v_noscale = np.einsum("ijk, il -> ljk", f, c)  # velocity field
-
-    v = np.einsum("ijk, jk -> ijk", v_noscale, np.reciprocal(rho))  # divide by rho to get average velocity
+    v = np.einsum("ijk, jk -> ijk", v_noscale, np.reciprocal(rho))  # divide by rho to get averange velocity
 
     return rho, v
 
@@ -25,14 +21,12 @@ def calc_equi(f, rho, v, c, weights):
     Calculate the equilibrium distribution function.
     See Milestone 2.
     """
-    f_equi = np.zeros_like(f[:, 1:nx_total+1, 1:ny_total+1])
-    v_abs = np.einsum("ijk -> jk", v[:, 1:nx_total+1, 1:ny_total+1])  # May be negative but will be squared anyway
-    for channel in range(1, 9):
-        scal = np.einsum("i, ijk -> jk", c[channel], v[:, 1:nx_total+1, 1:ny_total+1])
+    f_equi = np.zeros_like(f)
+    v_abs = np.einsum("ijk -> jk", v)  # May be negative but will be squared anyway
+    for channel in range(9):
+        scal = np.einsum("i, ijk -> jk", c[channel], v)
         sum_bracket = np.ones_like(scal) + 3 * scal + 9/2 * scal * scal - 3/2 * v_abs * v_abs
-
-        f_equi[channel, :, :] = weights[channel] * rho[1:nx_total+1, 1:ny_total+1] * sum_bracket
-    print(v[0, 1, :])
+        f_equi[channel, :, :] = weights[channel] * rho * sum_bracket
     return f_equi
 
 def border_control(f, borders):  
@@ -96,27 +90,24 @@ def streaming(f, rho, v, c, weights, borders, rank, step):
     Pipeline of one complete streaming step.
     """
     if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, start, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
+        print(f"step: {step}, start, rank: {rank}\n {f[1:5, :, :]}\n")
+    
+    f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
+
+    f += omega * (f_equi - f)  # Relaxation
+
+    if (step > 0 and step < 3) and rank < 2:
+        print(f"step: {step}, relaxed, rank: {rank}\n {f[1:5, :, :]}\n")
 
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
     if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, rolled, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
+        print(f"step: {step}, rolled, rank: {rank}\n {f[1:5, :, :]}\n")
 
     f = border_control(f, borders)  # Handle (global) boundary conditions
 
-    f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distribution function
-    #print(f_equi)
-    f[:, 1:nx_total+1, 1:ny_total+1] += omega * (f_equi - f[:, 1:nx_total+1, 1:ny_total+1])  # Relaxation
-
-    if (step > 0 and step < 3) and rank < 2:    
-        print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
-        #print(f"equi: {np.round(f_equi[1:5, :, :], 0)}")
-
     if (step > 0 and step < 3) and rank < 2:
-        print(f"step: {step}, end, rank: {rank}\n {np.round(f[1:5, :, :], 0)}\n")
-
-    rho, v = recalculate_functions(f, rho, v, c, rank, step)  # Update values
+        print(f"step: {step}, end, rank: {rank}\n {f[1:5, :, :]}\n")
 
     return f, rho, v
