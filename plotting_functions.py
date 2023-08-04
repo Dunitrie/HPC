@@ -18,28 +18,36 @@ def plot_velocity(f, v, return_plot=False):
     """
     v = np.swapaxes(v, 1, 2)
         
-    ax = plt.subplot()
+    fig, axes = plt.subplots(1,2, layout='tight')
+    
     y, x = np.meshgrid(np.arange(f.shape[1]), np.arange(f.shape[2]))
-    ax.quiver(x,y, v[1,...], v[0,...], angles='xy', scale_units='xy', scale=1, color='b', label='Vector Field')
-    ax.grid()
-    ax.set_xlabel('Y')
-    ax.set_ylabel('X')
-    ax.axis('equal')
-    ax.set_xlim(-2, f.shape[2]+1)
-    ax.set_ylim(-2, f.shape[1]+1)
-    ax.set_title("Velocity field")
-    ax.invert_yaxis()
+    axes[0].quiver(x,y, v[1,...], v[0,...], angles='xy', scale_units='xy', scale=1, color='b', label='Vector Field')
+    axes[0].grid()
+    axes[0].set_xlabel('Y')
+    axes[0].set_ylabel('X')
+    #axes[0].axis('equal')
+    axes[0].set_xlim(-1, np.max(x)+1)
+    axes[0].set_ylim(-1, np.max(y)+1)
+    axes[0].set_title("Velocity field")
+    axes[0].invert_yaxis()
     
     
     #plot the edges
-    plt.plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(-1), 'k')
-    plt.plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(x.shape[1]), 'k')
+    axes[0].plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(-1), 'k')
+    axes[0].plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(x.shape[1]), 'k')
     
-    plt.plot(np.ones(x.shape[1]+2)*(-1), np.arange(-1,x.shape[1]+1), 'k')
-    plt.plot(np.ones(x.shape[1]+2)*(x.shape[0]), np.arange(-1,x.shape[1]+1), 'k')
+    axes[0].plot(np.ones(x.shape[1]+2)*(-1), np.arange(-1,x.shape[1]+1), 'k')
+    axes[0].plot(np.ones(x.shape[1]+2)*(x.shape[0]), np.arange(-1,x.shape[1]+1), 'k')
+    
+    rho = np.einsum('cij->ij', f)
+    axes[1].imshow(rho, aspect='auto')
+    axes[1].get_yaxis().tick_right()
+    axes[1].set_title("Density Plot")
+    #axes[1].invert_yaxis()
+    
     
     if return_plot:
-        return ax
+        return axes
     else:
         plt.show()
         
@@ -63,7 +71,7 @@ def plot_velocity_slice(f, c=None, v=None, return_plot=False, fix_dims=True, avg
         v = np.einsum('cij, cd -> dij', f, c)
     
     if avg_vel:
-        print(v.shape)
+        #print(v.shape)
         v_slice = np.average(v[0,...],axis=1)
     else:
         v_slice = v[1, :, v.shape[2]//2]
