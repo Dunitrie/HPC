@@ -4,18 +4,20 @@ from streaming_scenarios import streaming, recalculate_functions
 from plotting_functions import plot_velocity, plot_velocity_slice
 
 # Choose scenario
-scenario = "sliding lid"
+# Possibilities: "shear wave 1", "shear wave 2", "couette flow", "poiseuille flow", "sliding lid"
+scenario = "poiseuille flow"
 
-n_timesteps = 100
-n_plots = 10
+n_timesteps = 5
+n_plots = 5
 
 # Initialize Grid:
-nx = 200  # num of rows
-ny = 160  # num of columns
+nx = 30  # num of rows
+ny = 20  # num of columns
 
 # Initialize weights and discrete direction vectors
 weights = np.array([4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36])
 c = np.array([[0, 0], [0, 1], [-1, 0], [0, -1], [1, 0], [-1, 1], [-1, -1], [1, -1], [1, 1]])
+
 wall_speed_north = 0
 
 match scenario:
@@ -42,7 +44,7 @@ match scenario:
         rho = np.ones((nx, ny))
         v = np.zeros((2, nx, ny))
         epsilon = 0.1
-        v[0:...] = epsilon * np.sin(2*np.pi*np.arange(0,ny)/nx)
+        v[0,...] = epsilon * np.sin(2*np.pi*np.arange(0,ny)/nx)
     case _:
         rho = np.ones((nx+borders[1]+borders[3], ny+borders[0]+borders[2]))
         v = np.zeros((2, nx+borders[1]+borders[3], ny+borders[0]+borders[2]))
