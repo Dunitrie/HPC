@@ -14,7 +14,7 @@ size = comm.Get_size() # num of processes
 rank = comm.Get_rank() # rank id of this process
 
 n_timesteps = 20
-n_plots = 5
+n_plots = 3
 
 # Initialize Grid:
 nx_total = 20  # num of rows
@@ -52,7 +52,7 @@ rank_down = rank + n_blocks[1]
 # Loop over timesteps
 for idx_time in range(n_timesteps):
     # Calculate the streaming step wrt (global) boundary conditions
-    f, rho, v = streaming(f, rho, v, c, weights, borders, rank, idx_time)
+    f, rho, v = streaming(f, rho, v, c, weights, borders)
 
     # Order of communcations is important in order that all the corner ghost points will get the diagonal adjacent values via two-step-communcation.
     if not borders[0]:
@@ -72,7 +72,7 @@ for idx_time in range(n_timesteps):
         data = comm.recv(source=rank_down)
         f[:, -1, :] = data
 
-    rho, v = recalculate_functions(f, rho, v, c, rank, idx_time)  # Update values
+    rho, v = recalculate_functions(f, rho, v, c)  # Update values
 
     # Plot average velocity vectors
     if idx_time % (n_timesteps // n_plots) == 0:
@@ -85,17 +85,8 @@ for idx_time in range(n_timesteps):
             for rank_idx, f_block in enumerate(f_list):
                 block_pos = (rank_idx // n_blocks[1], rank_idx % n_blocks[1])
                 f_full[:, (nx_opt * block_pos[0]):(nx_opt * block_pos[0] + f_block.shape[1]), (ny_opt * block_pos[1]):(ny_opt * block_pos[1] + f_block.shape[2])] = f_block
-            rho_full, v_full = recalculate_functions(f_full, rho_full, v_full, c, 5, -1)
+            rho_full, v_full = recalculate_functions(f_full, rho_full, v_full, c)
         
-            axes = plot_velocity(f_full, v_full, return_plot=True)
-            # x_width = nx_total//n_blocks[0]
-            # y_width = ny_total//n_blocks[1]
-            # for idx in range(1,n_blocks[1]):
-            #     ax.plot(np.ones(f_full[0].shape[1]+2)*(idx*x_width-1), np.arange(-1,f_full[0].shape[1]+1), 'k')
-            # for idx in range(1, n_blocks[0]):
-            #     ax.plot(np.arange(-1,f_full[0].shape[0]+1), np.ones(f_full[0].shape[0]+2)*(idx*y_width-1), 'k')
-            plt.show()
-            
-            # plot in rank 0
+            plot_velocity(f_full, v_full, return_plot=True)
 
-# plot the ending
+            plt.show()

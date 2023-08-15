@@ -2,10 +2,10 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-omega = 1  # Impact parameter of relaxation
+omega = 0.3  # Impact parameter of relaxation
 wall_speed = 0.5  # Speed of moving wall
 
-def recalculate_functions(f, rho, v, c, rank, step):
+def recalculate_functions(f, rho, v, c):
     """
     Recalculate density and average viscosity at each point after probability density function has been updated.
     See Milestone 1.
@@ -116,43 +116,20 @@ def border_control(f, borders):
         # Roll back edges because we need the corner note in the right place again.
         f[5, 0] = np.roll(f[5, 0], shift=(0, 1))
         f[6, 0] = np.roll(f[6, 0], shift=(0, -1))
-    
-    # # Set dry notes to 0.
-    # if borders[0]:
-    #     f[:, :, -1] = 0
-    # if borders[1]:
-    #     f[:, 0, :] = 0
-    # if borders[2]:
-    #     f[:, :, 0] = 0
-    # if borders[3]:
-    #     f[:, -1, :] = 0
 
     return f
 
-def streaming(f, rho, v, c, weights, borders, rank, step):
+def streaming(f, rho, v, c, weights, borders):
     """
     Pipeline of one complete streaming step.
     """
-    # if (step < 3) and rank < 2:
-    #     print(f"step: {step}, start, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
-
     f_equi = calc_equi(f, rho, v, c, weights)  # Equlibrium distrubution function
 
     f += omega * (f_equi - f)  # Relaxation   
 
-    # if (step < 3) and rank < 2:    
-    #     print(f"step: {step}, relaxed, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
-        #print(f"equi: {np.round(f_equi[1:5, :, :], 0)}")
-
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
-    # if (step < 3) and rank < 2:
-    #     print(f"step: {step}, rolled, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
-
     f = border_control(f, borders)  # Handle (global) boundary conditions
-    
-    # if (step < 3) and rank < 2:
-    #     print(f"step: {step}, end, rank: {rank}\n {np.round(f[5:9, :, :], 2)}\n")
 
     return f, rho, v
