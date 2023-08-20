@@ -5,9 +5,9 @@ from plotting_functions import plot_velocity, plot_velocity_slice
 
 # Choose scenario
 # Possibilities: "shear wave 1", "shear wave 2", "couette flow", "poiseuille flow", "sliding lid"
-scenario = "poiseuille flow"
+scenario = "sliding lid"
 
-n_timesteps = 5
+n_timesteps = 51
 n_plots = 5
 
 # Initialize Grid:
@@ -32,7 +32,7 @@ match scenario:
         borders = [1, 1, 1, 1]
     case "sliding lid":
         borders = [1, 1, 1, 1]
-        wall_speed_north = 1
+        wall_speed_north = 0.1
 
 match scenario:
     case "shear wave 1":
@@ -54,17 +54,17 @@ f = np.einsum("i,jk -> ijk", weights, np.ones_like(rho))
 
 # Loop over timesteps
 for idx_time in range(n_timesteps):
+    # Plot average velocity vectors
+    if idx_time % (n_timesteps // n_plots) == 0:
+
+        print(idx_time)
+
+        #plot_velocity(f, v, return_plot=True)
+        plot_velocity(f[:, 1:-1, 1:-1], v[:, 1:-1, 1:-1], return_plot=True)
+
+        plt.show()
+
     # Calculate the streaming step wrt (global) boundary conditions
     f, rho, v = streaming(f, rho, v, c, weights, borders, wall_speed_north, scenario)
 
     rho, v = recalculate_functions(f, rho, v, c)  # Update values
-
-    # Plot average velocity vectors
-    if idx_time % (n_timesteps // n_plots) == 0:
-
-        plot_velocity(f[:, borders[1]:nx-borders[3], borders[2]:ny-borders[0]], v[:, borders[1]:nx-borders[3], borders[2]:ny-borders[0]], return_plot=True)
-
-        plt.show()
-
-if scenario == "shear wave 1":
-    pass

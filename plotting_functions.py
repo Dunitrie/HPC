@@ -22,7 +22,7 @@ def plot_velocity(f, v, return_plot=False):
     
     y, x = np.meshgrid(np.arange(f.shape[1]), np.arange(f.shape[2]))
     axes[0].quiver(x,y, v[1,...], v[0,...], angles='xy', scale_units='xy', scale=1, color='b', label='Vector Field')
-    axes[0].grid()
+    #axes[0].grid()
     axes[0].set_xlabel('Y')
     axes[0].set_ylabel('X')
     #axes[0].axis('equal')
@@ -33,11 +33,11 @@ def plot_velocity(f, v, return_plot=False):
     
     
     #plot the edges
-    axes[0].plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(-1), 'k')
-    axes[0].plot(np.arange(-1,x.shape[0]+1), np.ones(x.shape[0]+2)*(x.shape[1]), 'k')
+    axes[0].plot(np.arange(-0.5,x.shape[0]+0.5), np.ones(x.shape[0]+1)*(-0.5), 'b')
+    axes[0].plot(np.arange(-0.5,x.shape[0]+0.5), np.ones(x.shape[0]+1)*(x.shape[1]-0.5), 'b')
     
-    axes[0].plot(np.ones(x.shape[1]+2)*(-1), np.arange(-1,x.shape[1]+1), 'k')
-    axes[0].plot(np.ones(x.shape[1]+2)*(x.shape[0]), np.arange(-1,x.shape[1]+1), 'k')
+    axes[0].plot(np.ones(x.shape[1]+1)*(-0.5), np.arange(-0.5,x.shape[1]+0.5), 'k')
+    axes[0].plot(np.ones(x.shape[1]+1)*(x.shape[0]-0.5), np.arange(-0.5,x.shape[1]+0.5), 'k')
     
     rho = np.einsum('cij->ij', f)
     im = axes[1].imshow(rho, aspect='auto')

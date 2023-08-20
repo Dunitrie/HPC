@@ -2,10 +2,12 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from plotting_functions import plot_velocity
+
 omega = 0.3  # Impact parameter of relaxation
 
 cs2 = 1/3
-p_in = 3
+p_in = 1.01
 p_out = 1
 
 rho_out = p_out / cs2
@@ -32,7 +34,7 @@ def calc_equi(f, rho, v, c, weights, scenario):
     for channel in range(9):
         scal = np.einsum("i, ijk -> jk", c[channel], v)
         sum_bracket = np.ones_like(scal) + 3 * scal + 9/2 * scal * scal - 3/2 * v_abs * v_abs
-        f_equi[channel, :, :] = weights[channel] * rho * sum_bracket
+        f_equi[channel, :, :] = weights[channel] * rho[:, :] * sum_bracket[:, :]
         if(scenario == "poiseuille flow"):
             f_equi[channel, :, 0] = weights[channel] * rho_in * sum_bracket[:, -2]
             f_equi[channel, :, -1] = weights[channel] * rho_out * sum_bracket[:, 1]
@@ -74,9 +76,9 @@ def border_control(f, borders, wall_speed, scenario):
         f[7, -1] = np.roll(f[7, -1], shift=(0, 1))
         f[8, -1] = np.roll(f[8, -1], shift=(0, -1))
 
-        f[2, -2, :] = f[4, -1, :]
-        f[5, -2, :] = f[7, -1, :]
-        f[6, -2, :] = f[8, -1, :]
+        f[2, -2, 1:-1] = f[4, -1, 1:-1]
+        f[5, -2, 2:-1] = f[7, -1, 2:-1]
+        f[6, -2, 1:-2] = f[8, -1, 1:-2]
 
         f[7, -1] = np.roll(f[7, -1], shift=(0, -1))
         f[8, -1] = np.roll(f[8, -1], shift=(0, 1))
@@ -85,9 +87,9 @@ def border_control(f, borders, wall_speed, scenario):
         f[5, 0] = np.roll(f[5, 0], shift=(0, -1))
         f[6, 0] = np.roll(f[6, 0], shift=(0, 1))
         
-        f[4, 1, :] = f[2, 0, :]
-        f[7, 1, :] = f[5, 0, :]
-        f[8, 1, :] = f[6, 0, :]
+        f[4, 1, 1:-1] = f[2, 0, 1:-1]
+        f[7, 1, 1:-2] = f[5, 0, 1:-2]
+        f[8, 1, 2:-1] = f[6, 0, 2:-1]
 
         f[5, 0] = np.roll(f[5, 0], shift=(0, 1))
         f[6, 0] = np.roll(f[6, 0], shift=(0, -1))
@@ -133,7 +135,6 @@ def border_control(f, borders, wall_speed, scenario):
         rho_N = np.zeros(f.shape[2])
         rho_N[:] = f[0, 1, :] + f[1, 1, :] + f[3, 1, :] +\
               2 * (f[2, 1, :] + f[6, 1, :] + f[5, 1, :])
-        rho_N = np.ones(f.shape[2])
         f[4, 1, 1:-1] = f[2, 0, 1:-1]
         f[7, 1, 1:-1] = f[5, 0, 1:-1] + 1/2 * (f[1, 1, 1:-1] - f[3, 1, 1:-1]) - 1/2 * rho_N[1:-1] * wall_speed
         f[8, 1, 1:-1] = f[6, 0, 1:-1] + 1/2 * (f[3, 1, 1:-1] - f[1, 1, 1:-1]) + 1/2 * rho_N[1:-1] * wall_speed
@@ -146,23 +147,25 @@ def streaming(f, rho, v, c, weights, borders, wall_speed, scenario):
     """
     Pipeline of one complete streaming step.
     """
+    #print(f"start:\n {np.round(f[:, :3, :3], 5)}")
+
     f_equi = calc_equi(f, rho, v, c, weights, scenario)  # Equlibrium distrubution function
-
-    f_old_1 = f[:, :, 1]
-    f_old_N = f[:, :, -2]
-
+    
     f += omega * (f_equi - f)  # Relaxation
 
     if(scenario == "poiseuille flow"):
-        f[:, :, 0] = f_equi[:, :, 0] + (f_old_N - f_equi[:, :, -2])
-        f[:, :, -1] = f_equi[:, :, -1] + (f_old_1 - f_equi[:, :, 1])
-
-    print(f[:, 0:4, 0])
-    print(f[:, 0:4, -1])
+        f[:, :, 0] = f_equi[:, :, 0] + (f[:, :, -2] - f_equi[:, :, -2])
+        f[:, :, -1] = f_equi[:, :, -1] + (f[:, :, 1] - f_equi[:, :, 1])
     
+    #print(f"relaxed:\n {np.round(f[:, :3, :3], 5)}")
+
     for channel in range(9):  # Move channels wrt their direction
         f[channel] = np.roll(f[channel], shift=c[channel], axis=(0,1))
 
+    #print(f"rolled:\n {np.round(f[:, :3, :3], 5)}")
+
     f = border_control(f, borders, wall_speed, scenario)  # Handle (global) boundary conditions
-    
+
+    #print(f"end:\n {np.round(f[:, :3, :3], 5)}")
+
     return f, rho, v
