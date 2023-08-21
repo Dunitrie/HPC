@@ -5,9 +5,6 @@ from process_coordination import width_height, bool_boundaries, number_of_blocks
 from streaming_functions import streaming, recalculate_functions
 from plotting_functions import plot_velocity, plot_velocity_slice
 
-import pickle
-import warnings
-
 # Initialize parallelization 
 comm = MPI.COMM_WORLD
 size = comm.Get_size() # num of processes
