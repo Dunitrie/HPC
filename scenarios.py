@@ -37,10 +37,10 @@ match scenario:
         # return the velocity of the moving wall with constant Re
         L = ny
         nü = 10**(-6)
-        Re = 1000
+        Re = 500
         def comp_vel_moving_wall(Re, L):
             return (Re * nü) / L
-         wall_speed_north = comp_vel_moving_wall(Re, L)
+        wall_speed_north = comp_vel_moving_wall(Re, L)
 
 match scenario:
     case "shear wave 1":
