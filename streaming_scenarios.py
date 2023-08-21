@@ -150,6 +150,18 @@ def streaming(f, rho, v, c, weights, borders, wall_speed, scenario):
     #print(f"start:\n {np.round(f[:, :3, :3], 5)}")
 
     f_equi = calc_equi(f, rho, v, c, weights, scenario)  # Equlibrium distrubution function
+
+    if(scenario == "sliding lid"):
+        # Reynolds number calculation with viscosity depending on relaxation time tau
+        # returns the relaxation time with constant Re
+        L = NY
+        cs_2 = 1/3
+        #nhy = cs_2 * ((1/omega) - 1/2)
+        Re = 1000
+        def comp_relaxation_time(Re, L, wall_speed_north):
+            return 1/((Re * L * u_mv * 3) + 0.5)
+        omega = comp_relaxation_time(Re, L, wall_speed_north)
+
     
     f += omega * (f_equi - f)  # Relaxation
 
